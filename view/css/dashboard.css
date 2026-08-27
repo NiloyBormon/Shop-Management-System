@@ -1,0 +1,18 @@
+body { font-family: Arial, sans-serif; background: #f5f8f6; color: #18332b; margin: 0; }
+header { display: flex; justify-content: space-between; align-items: center; padding: 18px 7%; background: #16745b; color: #fff; }
+header h1 { margin: 0; font-size: 1.35rem; }
+header a { color: #fff; }
+main { max-width: 1080px; margin: 34px auto; padding: 0 20px; }
+.stats { display: flex; gap: 16px; flex-wrap: wrap; }
+.stat, section { background: #fff; border: 1px solid #d6e2dc; border-radius: 8px; padding: 20px; }
+.stat { flex: 1; min-width: 180px; }
+.stat strong { display: block; font-size: 1.7rem; margin-top: 8px; }
+section { margin-top: 24px; }
+form { display: flex; gap: 10px; flex-wrap: wrap; align-items: end; }
+label { display: flex; flex-direction: column; gap: 6px; font-weight: bold; }
+input { padding: 10px; border: 1px solid #b9cec4; border-radius: 5px; }
+button { padding: 10px 18px; border: 0; border-radius: 5px; background: #16745b; color: #fff; cursor: pointer; }
+table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+th, td { text-align: left; padding: 12px 8px; border-bottom: 1px solid #e0e9e4; }
+.notice { color: #16745b; }
+.error { color: #9d2f21; }

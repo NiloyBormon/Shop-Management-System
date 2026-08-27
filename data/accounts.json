@@ -1,0 +1,10 @@
+[
+    {
+        "id": 1,
+        "tenant_id": 1,
+        "tenant_name": "niloy",
+        "username": "niloy",
+        "password_hash": "$2y$10$nMtphgDuru1BFd4cr.7.0uABcfiR3OVmzJU5VZCxADj9Ldz5VPeWe",
+        "created_at": "2026-08-27T09:16:01+02:00"
+    }
+]
