@@ -8,5 +8,6 @@ button { width: 100%; margin-top: 22px; padding: 12px; border: 0; border-radius:
 button:hover { background: #115d49; }
 .error, .message, .notice { padding: 10px; border-radius: 6px; margin-bottom: 15px; }
 .error { background: #ffe7e3; color: #9d2f21; }
-.message { background: #e2f4e9; color: #17633f; }
-.hint { color: #61766d; font-size: .9rem; }
+.message, .notice { background: #e2f4e9; color: #17633f; }
+.hint { color: #61766d; font-size: .9rem; margin-top: 18px; text-align: center; }
+.hint a { color: #16745b; font-weight: bold; text-decoration: none; }
