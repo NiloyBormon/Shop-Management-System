@@ -1,0 +1,9 @@
+[
+    {
+        "id": 1,
+        "tenant_id": 1,
+        "name": "ata",
+        "price": 100,
+        "stock": 10
+    }
+]
