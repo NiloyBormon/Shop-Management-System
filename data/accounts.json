@@ -6,5 +6,13 @@
         "username": "niloy",
         "password_hash": "$2y$10$nMtphgDuru1BFd4cr.7.0uABcfiR3OVmzJU5VZCxADj9Ldz5VPeWe",
         "created_at": "2026-08-27T09:16:01+02:00"
+    },
+    {
+        "id": 2,
+        "tenant_id": 2,
+        "tenant_name": "bormon's shop",
+        "username": "bormon",
+        "password_hash": "$2y$10$gKlhtYnvK5sA168TKvVi/OSqVmon148/m8./U9wKT0QiYl1MWurLC",
+        "created_at": "2026-08-27T10:11:39+02:00"
     }
 ]

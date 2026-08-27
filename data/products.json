@@ -5,5 +5,26 @@
         "name": "ata",
         "price": 100,
         "stock": 10
+    },
+    {
+        "id": 2,
+        "tenant_id": 2,
+        "name": "chips",
+        "price": 10,
+        "stock": 100
+    },
+    {
+        "id": 3,
+        "tenant_id": 1,
+        "name": "moyda",
+        "price": 120,
+        "stock": 10
+    },
+    {
+        "id": 4,
+        "tenant_id": 1,
+        "name": "suji",
+        "price": 120,
+        "stock": 10
     }
 ]

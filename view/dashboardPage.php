@@ -17,7 +17,7 @@ $inventoryValue = array_sum(array_map(static fn (array $product): float => $prod
         <div class="stats"><div class="stat">Products<strong><?= count($products) ?></strong></div><div class="stat">Units in stock<strong><?= $totalStock ?></strong></div><div class="stat">Inventory value<strong>$<?= number_format($inventoryValue, 2) ?></strong></div></div>
         <section>
             <h2>Add product</h2>
-            <?php if ($message): ?><p class="notice"><?= htmlspecialchars($message) ?></p><?php endif; ?>
+            <!-- <?php if ($message): ?><p class="notice"><?= htmlspecialchars($message) ?></p><?php endif; ?> -->
             <?php if ($error): ?><p class="error"><?= htmlspecialchars($error) ?></p><?php endif; ?>
             <form method="post">
                 <label>Product name<input name="name" required></label>
