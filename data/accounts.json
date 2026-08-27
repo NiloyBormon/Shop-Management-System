@@ -6,5 +6,29 @@
         "username": "niloy",
         "password_hash": "$2y$10$nMtphgDuru1BFd4cr.7.0uABcfiR3OVmzJU5VZCxADj9Ldz5VPeWe",
         "created_at": "2026-08-27T09:16:01+02:00"
+    },
+    {
+        "id": 2,
+        "tenant_id": 2,
+        "tenant_name": "rakib",
+        "username": "rakib",
+        "password_hash": "$2y$10$X79JxOPGuXUha.dzTr24NepNrgXeVLB515sg4t.8LEq21Qbp6XKc2",
+        "created_at": "2026-08-27T10:06:58+02:00"
+    },
+    {
+        "id": 3,
+        "tenant_id": 3,
+        "tenant_name": "daraz",
+        "username": "rafi",
+        "password_hash": "$2y$10$rMaeA8JhQCifyRQ1nkYTDuxn1sJTqdtlfpkPu12A6d1x8M2K8kowm",
+        "created_at": "2026-08-27T10:30:22+02:00"
+    },
+    {
+        "id": 4,
+        "tenant_id": 4,
+        "tenant_name": "Bangla Bazar",
+        "username": "Mahbub",
+        "password_hash": "$2y$10$vT6lxgIIblTOyDTKL7W6T.XUoZWHCsPbGQc.LbF2x.hAn0XQDVn1S",
+        "created_at": "2026-08-27T17:56:55+02:00"
     }
 ]
