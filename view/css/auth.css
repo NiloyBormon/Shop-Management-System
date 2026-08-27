@@ -1,10 +1,13 @@
 body { font-family: Arial, sans-serif; background: #eef4f1; color: #18332b; margin: 0; }
-main { max-width: 420px; margin: 10vh auto; padding: 32px; background: #fff; border: 1px solid #d6e2dc; border-radius: 10px; box-shadow: 0 12px 30px #18332b14; }
-h1 { margin-top: 0; color: #16745b; }
+main { max-width: 420px; margin: 10vh auto; padding: 32px; background: #fff; border: 1px solid #d6e2dc; border-radius: 10px; box-shadow: 0 12px 30px rgba(24, 51, 43, 0.08); }
+h1 { margin-top: 0; color: #16745b; font-size: 24px; }
 label { display: block; margin: 16px 0 6px; font-weight: bold; }
-input { box-sizing: border-box; width: 100%; padding: 11px; border: 1px solid #b9cec4; border-radius: 6px; font-size: 1rem; }
-button { width: 100%; margin-top: 22px; padding: 12px; border: 0; border-radius: 6px; background: #16745b; color: white; font-size: 1rem; cursor: pointer; }
-.error, .message { padding: 10px; border-radius: 6px; }
+input { box-sizing: border-box; width: 100%; padding: 11px; border: 1px solid #b9cec4; border-radius: 6px; font-size: 1rem; outline: none; }
+input:focus { border-color: #16745b; }
+button { width: 100%; margin-top: 22px; padding: 12px; border: 0; border-radius: 6px; background: #16745b; color: white; font-size: 1rem; cursor: pointer; font-weight: bold; }
+button:hover { background: #115d49; }
+.error, .message, .notice { padding: 10px; border-radius: 6px; margin-bottom: 15px; }
 .error { background: #ffe7e3; color: #9d2f21; }
-.message { background: #e2f4e9; color: #17633f; }
-.hint { color: #61766d; font-size: .9rem; }
+.message, .notice { background: #e2f4e9; color: #17633f; }
+.hint { color: #61766d; font-size: .9rem; margin-top: 18px; text-align: center; }
+.hint a { color: #16745b; font-weight: bold; text-decoration: none; }

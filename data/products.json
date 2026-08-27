@@ -19,5 +19,40 @@
         "name": "asus zenbook",
         "price": 100000,
         "stock": 5
+    },
+    {
+        "id": 4,
+        "tenant_id": 2,
+        "name": "victus15",
+        "price": 90000,
+        "stock": 12
+    },
+    {
+        "id": 5,
+        "tenant_id": 2,
+        "name": "victus15",
+        "price": 90000,
+        "stock": 12
+    },
+    {
+        "id": 6,
+        "tenant_id": 2,
+        "name": "victus15",
+        "price": 90000,
+        "stock": 12
+    },
+    {
+        "id": 7,
+        "tenant_id": 3,
+        "name": "gpu",
+        "price": 10,
+        "stock": 10
+    },
+    {
+        "id": 8,
+        "tenant_id": 2,
+        "name": "Mouse",
+        "price": 10000,
+        "stock": 15
     }
 ]
