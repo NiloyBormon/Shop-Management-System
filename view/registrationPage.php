@@ -3,27 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ShopDesk | Register</title>
+    <title>Register Shop | Shop Management System</title>
     <link rel="stylesheet" href="view/css/auth.css">
 </head>
 <body>
     <main>
-        <h1>Create shop account</h1>
-        <p>Register your shop before signing in.</p>
-        <?php if ($error): ?><p class="error"><?= htmlspecialchars($error) ?></p><?php endif; ?>
-        <?php if ($message): ?><p class="message"><?= htmlspecialchars($message) ?></p><?php endif; ?>
-        <form method="post">
-            <label for="shop_name">Shop name</label>
-            <input type="text" id="shop_name" name="shop_name" required>
+        <h1>Register Shop</h1>
+        <p class="hint" style="text-align: left; margin: 0 0 15px;">Create an account to manage your store</p>
+
+        <?php if (!empty($error)): ?>
+            <div class="error"><?= htmlspecialchars($error) ?></div>
+        <?php endif; ?>
+        <?php if (!empty($message)): ?>
+            <div class="message"><?= htmlspecialchars($message) ?></div>
+        <?php endif; ?>
+
+        <form method="post" action="">
+            <label for="tenant_name">Shop / Store Name</label>
+            <input type="text" id="tenant_name" name="tenant_name" placeholder="e.g. Daraz" required>
+
             <label for="username">Username</label>
-            <input type="text" id="username" name="username" required>
+            <input type="text" id="username" name="username" required autocomplete="username">
+
             <label for="password">Password</label>
-            <input type="password" id="password" name="password" minlength="6" required>
-            <label for="confirm_password">Confirm password</label>
-            <input type="password" id="confirm_password" name="confirm_password" minlength="6" required>
-            <button type="submit">Create account</button>
+            <input type="password" id="password" name="password" required minlength="4">
+
+            <button type="submit" name="register" value="1">Create Account</button>
         </form>
-        <p class="hint">Already registered? <a href="index.php">Sign in</a></p>
+
+        <p class="hint">Already have a shop? <a href="index.php">Sign In</a></p>
     </main>
 </body>
 </html>
