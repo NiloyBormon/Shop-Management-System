@@ -15,12 +15,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login'])) {
 	$password = (string) ($_POST['password'] ?? '');
 	$user = findUser($username);
 
-	if ($user && password_verify($password, $user['password_hash'])) {
+	if ($user && $user['status'] === 'active' && password_verify($password, $user['password_hash'])) {
 		session_regenerate_id(true);
 		$_SESSION['user_id'] = $user['id'];
 		$_SESSION['tenant_id'] = $user['tenant_id'];
 		$_SESSION['tenant_name'] = $user['tenant_name'];
 		$_SESSION['username'] = $user['username'];
+		$_SESSION['email'] = $user['email'] ?? '';
+		$_SESSION['role'] = $user['role'];
 		header('Location: index.php');
 		exit;
 	}
@@ -28,24 +30,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login'])) {
 	$error = 'Username or password is incorrect.';
 }
 
-if (!isset($_SESSION['tenant_id'])) {
-	require __DIR__ . '/../view/loginPage.php';
+if (!isset($_SESSION['user_id'])) {
+	if (isset($_GET['login']) || $_SERVER['REQUEST_METHOD'] === 'POST') {
+		require __DIR__ . '/../view/loginPage.php';
+	} else {
+		require __DIR__ . '/../view/landingPage.php';
+	}
 	exit;
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_product'])) {
-	$name = trim((string) ($_POST['name'] ?? ''));
-	$price = filter_var($_POST['price'] ?? null, FILTER_VALIDATE_FLOAT);
-	$stock = filter_var($_POST['stock'] ?? null, FILTER_VALIDATE_INT);
-
-	if ($name === '' || $price === false || $price < 0 || $stock === false || $stock < 0) {
-		$error = 'Enter a product name, a valid price, and a valid stock quantity.';
-	} else {
-		addProduct((int) $_SESSION['tenant_id'], $name, (float) $price, (int) $stock);
-		$message = 'Product added successfully.';
-	}
-}
-
-$products = productsForTenant((int) $_SESSION['tenant_id']);
-require __DIR__ . '/../view/dashboardPage.php';
+require __DIR__ . '/dashboardController.php';
 ?>

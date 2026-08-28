@@ -19,14 +19,17 @@
         <?php endif; ?>
 
         <form method="post" action="">
-            <label for="tenant_name">Shop / Store Name</label>
-            <input type="text" id="tenant_name" name="tenant_name" placeholder="e.g. Daraz" required>
+            <label for="shop_name">Shop / Store Name</label>
+            <input type="text" id="shop_name" name="shop_name" placeholder="e.g. Daraz" required>
 
             <label for="username">Username</label>
             <input type="text" id="username" name="username" required autocomplete="username">
 
             <label for="password">Password</label>
             <input type="password" id="password" name="password" required minlength="4">
+
+            <label for="confirm_password">Confirm Password</label>
+            <input type="password" id="confirm_password" name="confirm_password" required minlength="6">
 
             <button type="submit" name="register" value="1">Create Account</button>
         </form>

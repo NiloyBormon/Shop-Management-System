@@ -29,6 +29,7 @@
         </form>
 
         <p class="hint">Don't have an account? <a href="register.php">Register your shop</a></p>
+        <p class="hint"><a href="index.php">Back to home</a></p>
     </main>
 </body>
 </html>
