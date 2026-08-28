@@ -394,3 +394,142 @@ tr:hover {
     .table-heading { flex-direction: column; align-items: stretch; gap: 14px; }
     .search-box input { width: 100%; }
 }
+
+.owner-dashboard-layout {
+    display: grid;
+    grid-template-columns: 220px minmax(0, 1fr);
+    gap: 24px;
+    align-items: start;
+}
+
+.owner-dashboard-layout .owner-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.owner-dashboard-layout .owner-panels {
+    min-width: 0;
+}
+
+.owner-sidebar {
+    display: grid;
+    gap: 8px;
+    padding: 12px;
+    background: #0f766e;
+    border-radius: 12px;
+    position: sticky;
+    top: 24px;
+}
+
+.owner-nav-button {
+    width: 100%;
+    margin: 0;
+    padding: 13px 14px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: #ccfbf1;
+    text-align: left;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.owner-nav-button:hover,
+.owner-nav-button.active {
+    background: #ffffff;
+    color: #0f766e;
+}
+
+.owner-panel {
+    display: none;
+    margin-bottom: 0;
+}
+
+.owner-panel.active {
+    display: block;
+}
+
+.owner-panel .table-wrapper {
+    margin-top: 24px;
+}
+
+.admin-dashboard-layout {
+    display: grid;
+    grid-template-columns: 220px minmax(0, 1fr);
+    gap: 24px;
+    align-items: start;
+}
+
+.admin-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    background: #0f766e;
+    border-radius: 12px;
+    position: sticky;
+    top: 24px;
+}
+
+.admin-nav-button {
+    width: 100%;
+    margin: 0;
+    padding: 13px 14px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: #ccfbf1;
+    text-align: left;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.admin-nav-button:hover,
+.admin-nav-button.active {
+    background: #ffffff;
+    color: #0f766e;
+}
+
+.admin-panels {
+    min-width: 0;
+}
+
+.admin-panel {
+    display: none;
+    margin-bottom: 0;
+}
+
+.admin-panel.active {
+    display: block;
+}
+
+.admin-panel .table-wrapper {
+    margin-top: 24px;
+}
+
+@media (max-width: 700px) {
+    .owner-dashboard-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-dashboard-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .owner-sidebar,
+    .admin-sidebar {
+        position: static;
+        grid-template-columns: repeat(3, 1fr);
+        display: grid;
+    }
+
+    .owner-nav-button,
+    .admin-nav-button {
+        text-align: center;
+        padding: 11px 6px;
+        font-size: 12px;
+    }
+}

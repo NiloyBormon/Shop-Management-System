@@ -1,108 +1,360 @@
 <?php
 declare(strict_types=1);
 
-function accountsFile(): string
-{
-	return __DIR__ . '/../data/accounts.json';
+$db_host = 'localhost';
+$db_user = 'root';
+$db_pass = '';
+$db_name = 'shop_management';
+
+mysqli_report(MYSQLI_REPORT_OFF);
+$conn = new mysqli($db_host, $db_user, $db_pass, $db_name);
+
+if ($conn->connect_error) {
+	die('Database connection failed: ' . $conn->connect_error);
 }
 
-function productsFile(): string
-{
-	return __DIR__ . '/../data/products.json';
-}
-
-function loadAccounts(): array
-{
-	$file = accountsFile();
-	if (!file_exists($file)) {
-		return [];
-	}
-
-	$accounts = json_decode((string) file_get_contents($file), true);
-	return is_array($accounts) ? $accounts : [];
-}
-
-function saveAccounts(array $accounts): void
-{
-	saveJson(accountsFile(), $accounts, 'account');
-}
-
-function loadProducts(): array
-{
-	if (!file_exists(productsFile())) {
-		return [];
-	}
-
-	$products = json_decode((string) file_get_contents(productsFile()), true);
-	return is_array($products) ? $products : [];
-}
-
-function saveJson(string $file, array $data, string $type): void
-{
-	$dataDirectory = dirname($file);
-	if (!is_dir($dataDirectory)) {
-		mkdir($dataDirectory, 0775, true);
-	}
-
-	if (file_put_contents($file, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . PHP_EOL, LOCK_EX) === false) {
-		throw new RuntimeException("Unable to save {$type} data.");
-	}
-}
+$conn->set_charset('utf8mb4');
 
 function findUser(string $username): ?array
 {
-	foreach (loadAccounts() as $account) {
-		if (($account['username'] ?? '') === $username) {
-			return $account;
-		}
-	}
+	global $conn;
+	$statement = $conn->prepare(
+		' SELECT id, tenant_id, tenant_name, username, password_hash, role, email, status
+		 FROM accounts WHERE username = ? LIMIT 1'
+	);
+	$statement->bind_param('s', $username);
+	$statement->execute();
+	$result = $statement->get_result();
+	$account = $result->fetch_assoc();
+	$statement->close();
 
-	return null;
+	return $account ?: null;
 }
 
 function createAccount(string $shopName, string $username, string $password): void
 {
-	$accounts = loadAccounts();
-	foreach ($accounts as $account) {
-		if (($account['username'] ?? '') === $username) {
-			throw new InvalidArgumentException('That username is already in use.');
+	global $conn;
+	$passwordHash = password_hash($password, PASSWORD_DEFAULT);
+	$conn->begin_transaction();
+	try {
+		$statement = $conn->prepare(
+			"INSERT INTO accounts (tenant_name, username, password_hash, role, status)
+			 VALUES (?, ?, ?, 'shop_owner', 'active')"
+		);
+		$statement->bind_param('sss', $shopName, $username, $passwordHash);
+		if (!$statement->execute()) {
+			if ($conn->errno === 1062) {
+				throw new InvalidArgumentException('That username is already in use.');
+			}
+			throw new RuntimeException('Unable to create account.');
 		}
-		if (($account['tenant_name'] ?? '') === $shopName) {
-			throw new InvalidArgumentException('That shop name is already registered.');
-		}
-	}
+		$ownerId = $conn->insert_id;
+		$statement->close();
 
-	$tenantIds = array_column($accounts, 'tenant_id');
-	$tenantId = $tenantIds ? max(array_map('intval', $tenantIds)) + 1 : 1;
-	$accounts[] = [
-		'id' => count($accounts) + 1,
-		'tenant_id' => $tenantId,
-		'tenant_name' => $shopName,
-		'username' => $username,
-		'password_hash' => password_hash($password, PASSWORD_DEFAULT),
-		'created_at' => date(DATE_ATOM),
-	];
-	saveAccounts($accounts);
+		$shop = $conn->prepare("INSERT INTO shops (name, owner_id, status) VALUES (?, ?, 'approved')");
+		$shop->bind_param('si', $shopName, $ownerId);
+		$shop->execute();
+		$shopId = $conn->insert_id;
+		$shop->close();
+
+		$update = $conn->prepare('UPDATE accounts SET tenant_id = ? WHERE id = ?');
+		$update->bind_param('ii', $shopId, $ownerId);
+		$update->execute();
+		$update->close();
+
+		$member = $conn->prepare("INSERT INTO shop_members (shop_id, account_id, member_role) VALUES (?, ?, 'owner')");
+		$member->bind_param('ii', $shopId, $ownerId);
+		$member->execute();
+		$member->close();
+
+		$subscription = $conn->prepare("INSERT INTO subscriptions (shop_id, plan, payment_status) VALUES (?, 'free', 'unpaid')");
+		$subscription->bind_param('i', $shopId);
+		$subscription->execute();
+		$subscription->close();
+		$conn->commit();
+	} catch (Throwable $exception) {
+		$conn->rollback();
+		throw $exception;
+	}
+}
+
+function shopForUser(int $userId): ?array
+{
+	global $conn;
+	$statement = $conn->prepare(
+		'SELECT s.id, s.name, s.status, s.created_at, sub.plan, sub.payment_status
+		 FROM shops s LEFT JOIN subscriptions sub ON sub.shop_id = s.id
+		 WHERE s.owner_id = ? OR s.id IN (SELECT shop_id FROM shop_members WHERE account_id = ?) LIMIT 1'
+	);
+	$statement->bind_param('ii', $userId, $userId);
+	$statement->execute();
+	$shop = $statement->get_result()->fetch_assoc();
+	$statement->close();
+	return $shop ?: null;
+}
+
+function allShops(): array
+{
+	global $conn;
+	$result = $conn->query(
+		'SELECT s.id, s.name, s.status, s.created_at, a.username AS owner_username,
+		 sub.plan, sub.payment_status,
+		 (SELECT COUNT(*) FROM shop_members m WHERE m.shop_id = s.id) AS member_count
+		 FROM shops s LEFT JOIN accounts a ON a.id = s.owner_id
+		 LEFT JOIN subscriptions sub ON sub.shop_id = s.id ORDER BY s.id DESC'
+	);
+	return $result->fetch_all(MYSQLI_ASSOC);
+}
+
+function platformStats(): array
+{
+	global $conn;
+	$result = $conn->query(
+		"SELECT (SELECT COUNT(*) FROM shops WHERE status <> 'deleted') AS total_shops,
+		 (SELECT COUNT(*) FROM accounts WHERE status = 'active') AS active_users,
+		 (SELECT COUNT(*) FROM products) AS total_products,
+		 (SELECT COALESCE(SUM(total), 0) FROM sales) AS total_sales"
+	);
+	return $result->fetch_assoc() ?: [];
+}
+
+function setShopStatus(int $shopId, string $status): void
+{
+	global $conn;
+	if (!in_array($status, ['approved', 'suspended', 'deleted'], true)) {
+		throw new InvalidArgumentException('Invalid shop status.');
+	}
+	$statement = $conn->prepare('UPDATE shops SET status = ? WHERE id = ?');
+	$statement->bind_param('si', $status, $shopId);
+	$statement->execute();
+	$statement->close();
+}
+
+function updateSubscription(int $shopId, string $plan, string $paymentStatus): void
+{
+	global $conn;
+	if (!in_array($plan, ['free', 'basic', 'pro', 'enterprise'], true) || !in_array($paymentStatus, ['paid', 'unpaid'], true)) {
+		throw new InvalidArgumentException('Invalid subscription selection.');
+	}
+	$statement = $conn->prepare('UPDATE subscriptions SET plan = ?, payment_status = ? WHERE shop_id = ?');
+	$statement->bind_param('ssi', $plan, $paymentStatus, $shopId);
+	$statement->execute();
+	$statement->close();
+}
+
+function updateShop(int $shopId, int $ownerId, string $name): void
+{
+	global $conn;
+	$statement = $conn->prepare('UPDATE shops SET name = ? WHERE id = ? AND owner_id = ?');
+	$statement->bind_param('sii', $name, $shopId, $ownerId);
+	$statement->execute();
+	$statement->close();
+	$account = $conn->prepare('UPDATE accounts SET tenant_name = ? WHERE id = ? AND role = \'shop_owner\'');
+	$account->bind_param('si', $name, $ownerId);
+	$account->execute();
+	$account->close();
 }
 
 function productsForTenant(int $tenantId): array
 {
-	$products = array_filter(loadProducts(), static fn (array $product): bool => (int) ($product['tenant_id'] ?? 0) === $tenantId);
-	usort($products, static fn (array $first, array $second): int => (int) $second['id'] <=> (int) $first['id']);
-	return array_values($products);
+	global $conn;
+	$statement = $conn->prepare(
+		'SELECT id, tenant_id, name, price, stock
+		 FROM products WHERE tenant_id = ? ORDER BY id DESC'
+	);
+	$statement->bind_param('i', $tenantId);
+	$statement->execute();
+	$products = $statement->get_result()->fetch_all(MYSQLI_ASSOC);
+	$statement->close();
+
+	return $products;
 }
 
 function addProduct(int $tenantId, string $name, float $price, int $stock): void
 {
-	$products = loadProducts();
-	$productIds = array_column($products, 'id');
-	$productId = $productIds ? max(array_map('intval', $productIds)) + 1 : 1;
-	$products[] = [
-		'id' => $productId,
-		'tenant_id' => $tenantId,
-		'name' => $name,
-		'price' => $price,
-		'stock' => $stock,
-	];
-	saveJson(productsFile(), $products, 'product');
+	global $conn;
+	$statement = $conn->prepare('INSERT INTO products (tenant_id, name, price, stock) VALUES (?, ?, ?, ?)');
+	$statement->bind_param('isdi', $tenantId, $name, $price, $stock);
+	$statement->execute();
+	$statement->close();
+}
+
+function updateProduct(int $productId, int $tenantId, string $name, float $price): void
+{
+	global $conn;
+	$statement = $conn->prepare('UPDATE products SET name = ?, price = ? WHERE id = ? AND tenant_id = ?');
+	$statement->bind_param('sdii', $name, $price, $productId, $tenantId);
+	$statement->execute();
+	$statement->close();
+}
+
+function deleteProduct(int $productId, int $tenantId): void
+{
+	global $conn;
+	$statement = $conn->prepare('DELETE FROM products WHERE id = ? AND tenant_id = ?');
+	$statement->bind_param('ii', $productId, $tenantId);
+	$statement->execute();
+	$statement->close();
+}
+
+function updateStock(int $productId, int $tenantId, int $accountId, int $change, string $reason): void
+{
+	global $conn;
+	$conn->begin_transaction();
+	try {
+		$check = $conn->prepare('SELECT stock FROM products WHERE id = ? AND tenant_id = ? FOR UPDATE');
+		$check->bind_param('ii', $productId, $tenantId);
+		$check->execute();
+		$product = $check->get_result()->fetch_assoc();
+		$check->close();
+		if (!$product || (int) $product['stock'] + $change < 0) {
+			throw new InvalidArgumentException('Stock cannot become negative.');
+		}
+		$newStock = (int) $product['stock'] + $change;
+		$update = $conn->prepare('UPDATE products SET stock = ? WHERE id = ? AND tenant_id = ?');
+		$update->bind_param('iii', $newStock, $productId, $tenantId);
+		$update->execute();
+		$update->close();
+		$movement = $conn->prepare('INSERT INTO inventory_movements (product_id, account_id, quantity_change, reason) VALUES (?, ?, ?, ?)');
+		$movement->bind_param('iiis', $productId, $accountId, $change, $reason);
+		$movement->execute();
+		$movement->close();
+		$conn->commit();
+	} catch (Throwable $exception) {
+		$conn->rollback();
+		throw $exception;
+	}
+}
+
+function recordSale(int $tenantId, int $accountId, int $productId, int $quantity): void
+{
+	global $conn;
+	$conn->begin_transaction();
+	try {
+		$check = $conn->prepare('SELECT price, stock FROM products WHERE id = ? AND tenant_id = ? FOR UPDATE');
+		$check->bind_param('ii', $productId, $tenantId);
+		$check->execute();
+		$product = $check->get_result()->fetch_assoc();
+		$check->close();
+		if (!$product || $quantity < 1 || (int) $product['stock'] < $quantity) {
+			throw new InvalidArgumentException('Not enough stock for this sale.');
+		}
+		$total = (float) $product['price'] * $quantity;
+		$sale = $conn->prepare('INSERT INTO sales (shop_id, account_id, total) VALUES (?, ?, ?)');
+		$sale->bind_param('iid', $tenantId, $accountId, $total);
+		$sale->execute();
+		$saleId = $conn->insert_id;
+		$sale->close();
+		$item = $conn->prepare('INSERT INTO sale_items (sale_id, product_id, quantity, unit_price) VALUES (?, ?, ?, ?)');
+		$unitPrice = (float) $product['price'];
+		$item->bind_param('iiid', $saleId, $productId, $quantity, $unitPrice);
+		$item->execute();
+		$item->close();
+		$newStock = (int) $product['stock'] - $quantity;
+		$update = $conn->prepare('UPDATE products SET stock = ? WHERE id = ? AND tenant_id = ?');
+		$update->bind_param('iii', $newStock, $productId, $tenantId);
+		$update->execute();
+		$update->close();
+		$movement = $conn->prepare("INSERT INTO inventory_movements (product_id, account_id, quantity_change, reason) VALUES (?, ?, ?, 'Sale')");
+		$change = -$quantity;
+		$movement->bind_param('iii', $productId, $accountId, $change);
+		$movement->execute();
+		$movement->close();
+		$conn->commit();
+	} catch (Throwable $exception) {
+		$conn->rollback();
+		throw $exception;
+	}
+}
+
+function staffForShop(int $shopId): array
+{
+	global $conn;
+	$statement = $conn->prepare("SELECT a.id, a.username, a.email, a.status FROM shop_members m JOIN accounts a ON a.id = m.account_id WHERE m.shop_id = ? AND m.member_role = 'staff' ORDER BY a.id DESC");
+	$statement->bind_param('i', $shopId);
+	$statement->execute();
+	$staff = $statement->get_result()->fetch_all(MYSQLI_ASSOC);
+	$statement->close();
+	return $staff;
+}
+
+function createStaff(int $shopId, string $username, string $password, string $email): void
+{
+	global $conn;
+	$passwordHash = password_hash($password, PASSWORD_DEFAULT);
+	$conn->begin_transaction();
+	try {
+		$account = $conn->prepare("INSERT INTO accounts (tenant_name, username, password_hash, role, email, status) VALUES ('', ?, ?, 'shop_staff', ?, 'active')");
+		$account->bind_param('sss', $username, $passwordHash, $email);
+		if (!$account->execute()) {
+			if ($conn->errno === 1062) {
+				throw new InvalidArgumentException('That username is already in use.');
+			}
+			throw new RuntimeException('Unable to create staff account.');
+		}
+		$accountId = $conn->insert_id;
+		$account->close();
+		$member = $conn->prepare("INSERT INTO shop_members (shop_id, account_id, member_role) VALUES (?, ?, 'staff')");
+		$member->bind_param('ii', $shopId, $accountId);
+		if (!$member->execute()) {
+			throw new RuntimeException('Unable to assign the staff account to this shop.');
+		}
+		$member->close();
+		$conn->commit();
+	} catch (Throwable $exception) {
+		$conn->rollback();
+		throw $exception;
+	}
+}
+
+function removeStaff(int $shopId, int $accountId): void
+{
+	global $conn;
+	$statement = $conn->prepare("DELETE FROM shop_members WHERE shop_id = ? AND account_id = ? AND member_role = 'staff'");
+	$statement->bind_param('ii', $shopId, $accountId);
+	$statement->execute();
+	$statement->close();
+	$delete = $conn->prepare("UPDATE accounts SET status = 'deleted' WHERE id = ? AND role = 'shop_staff'");
+	$delete->bind_param('i', $accountId);
+	$delete->execute();
+	$delete->close();
+}
+
+function updateProfile(int $accountId, string $username, string $email): void
+{
+	global $conn;
+	$statement = $conn->prepare('UPDATE accounts SET username = ?, email = ? WHERE id = ?');
+	$statement->bind_param('ssi', $username, $email, $accountId);
+	if (!$statement->execute() && $conn->errno === 1062) {
+		$statement->close();
+		throw new InvalidArgumentException('That username is already in use.');
+	}
+	$statement->close();
+}
+
+function changePassword(int $accountId, string $currentPassword, string $newPassword): void
+{
+	global $conn;
+	$statement = $conn->prepare('SELECT password_hash FROM accounts WHERE id = ?');
+	$statement->bind_param('i', $accountId);
+	$statement->execute();
+	$account = $statement->get_result()->fetch_assoc();
+	$statement->close();
+	if (!$account || !password_verify($currentPassword, $account['password_hash'])) {
+		throw new InvalidArgumentException('Current password is incorrect.');
+	}
+	$hash = password_hash($newPassword, PASSWORD_DEFAULT);
+	$update = $conn->prepare('UPDATE accounts SET password_hash = ? WHERE id = ?');
+	$update->bind_param('si', $hash, $accountId);
+	$update->execute();
+	$update->close();
+}
+
+function deleteAccount(int $accountId): void
+{
+	global $conn;
+	$statement = $conn->prepare("UPDATE accounts SET status = 'deleted' WHERE id = ?");
+	$statement->bind_param('i', $accountId);
+	$statement->execute();
+	$statement->close();
 }
