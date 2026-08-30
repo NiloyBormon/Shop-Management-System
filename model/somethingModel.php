@@ -6,8 +6,51 @@ $db_user = 'root';
 $db_pass = '';
 $db_name = 'shop_management';
 
+function ensureDatabaseAndSchema(string $host, string $user, string $pass, string $dbName): mysqli
+{
+	$adminConnection = new mysqli($host, $user, $pass);
+	if ($adminConnection->connect_error) {
+		die('Database server connection failed: ' . $adminConnection->connect_error);
+	}
+
+	$createDatabaseSql = "CREATE DATABASE IF NOT EXISTS `$dbName`
+		CHARACTER SET utf8mb4
+		COLLATE utf8mb4_unicode_ci";
+
+	if (!$adminConnection->query($createDatabaseSql)) {
+		die('Database creation failed: ' . $adminConnection->error);
+	}
+
+	if (!$adminConnection->select_db($dbName)) {
+		die('Unable to select database: ' . $adminConnection->error);
+	}
+
+	$schemaCheck = $adminConnection->query("SHOW TABLES LIKE 'accounts'");
+	if ($schemaCheck && $schemaCheck->num_rows === 0) {
+		$schemaPath = __DIR__ . '/../data/shop_management.sql';
+		if (file_exists($schemaPath) && is_readable($schemaPath)) {
+			$sql = file_get_contents($schemaPath);
+			if ($sql === false) {
+				die('Unable to read database schema file.');
+			}
+
+			if (!$adminConnection->multi_query($sql)) {
+				die('Database schema creation failed: ' . $adminConnection->error);
+			}
+
+			do {
+				if ($result = $adminConnection->store_result()) {
+					$result->free();
+				}
+			} while ($adminConnection->more_results() && $adminConnection->next_result());
+		}
+	}
+
+	return $adminConnection;
+}
+
 mysqli_report(MYSQLI_REPORT_OFF);
-$conn = new mysqli($db_host, $db_user, $db_pass, $db_name);
+$conn = ensureDatabaseAndSchema($db_host, $db_user, $db_pass, $db_name);
 
 if ($conn->connect_error) {
 	die('Database connection failed: ' . $conn->connect_error);
