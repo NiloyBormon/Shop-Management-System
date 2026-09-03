@@ -28,7 +28,7 @@
             <button type="submit" name="login" value="1">Sign In</button>
         </form>
 
-        <p class="hint">Don't have an account? <a href="register.php">Register your shop</a></p>
+        <p class="hint">Don't have an account? <a href="controller/register.php">Create an owner account</a></p>
         <p class="hint"><a href="index.php">Back to home</a></p>
     </main>
 </body>

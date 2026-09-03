@@ -1,28 +1,54 @@
 <?php
 $totalProducts = count($products ?? []);
-$totalStock = array_sum(array_column($products ?? [], 'stock'));
-$inventoryValue = array_sum(array_map(static fn (array $p): float => (float)($p['price'] ?? 0) * (int)($p['stock'] ?? 0), $products ?? []));
-$outOfStockItems = count(array_filter($products ?? [], static fn (array $p): bool => (int)$p['stock'] === 0));
-$lowStockItems = count(array_filter($products ?? [], static fn (array $p): bool => (int)$p['stock'] > 0 && (int)$p['stock'] <= 5));
+$totalStock = array_sum(array_column($products ?? [], "stock"));
+$inventoryValue = array_sum(
+    array_map(
+        static fn(array $p): float => (float) ($p["price"] ?? 0) *
+            (int) ($p["stock"] ?? 0),
+        $products ?? [],
+    ),
+);
+$outOfStockItems = count(
+    array_filter(
+        $products ?? [],
+        static fn(array $p): bool => (int) $p["stock"] === 0,
+    ),
+);
+$lowStockItems = count(
+    array_filter(
+        $products ?? [],
+        static fn(array $p): bool => (int) $p["stock"] > 0 &&
+            (int) $p["stock"] <= 5,
+    ),
+);
 $inStockCount = $totalProducts - $lowStockItems - $outOfStockItems;
-$avgPrice = $totalProducts > 0 ? array_sum(array_column($products ?? [], 'price')) / $totalProducts : 0;
+$avgPrice =
+    $totalProducts > 0
+        ? array_sum(array_column($products ?? [], "price")) / $totalProducts
+        : 0;
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= htmlspecialchars($_SESSION['tenant_name'] ?? 'Dashboard') ?> | ShopDesk</title>
+    <title><?= htmlspecialchars(
+        $_SESSION["tenant_name"] ?? "Dashboard",
+    ) ?> | ShopDesk</title>
     <link rel="stylesheet" href="view/css/dashboard.css">
 </head>
 <body>
     <header>
-        <div class="brand-wrapper">
+        <a class="brand-wrapper" href="index.php">
             <div class="brand-icon">🛍️</div>
-            <h1><?= htmlspecialchars($_SESSION['tenant_name'] ?? 'Shop Management') ?></h1>
-        </div>
+            <h1><?= htmlspecialchars(
+                $_SESSION["tenant_name"] ?? "Shop Management",
+            ) ?></h1>
+        </a>
         <div class="user-badge">
-            <span>👤 <?= htmlspecialchars($_SESSION['username'] ?? 'User') ?></span>
+            <span>👤 <?= htmlspecialchars(
+                $_SESSION["username"] ?? "User",
+            ) ?></span>
             <span>·</span>
             <a href="?logout=1">Log out</a>
         </div>
@@ -78,8 +104,16 @@ $avgPrice = $totalProducts > 0 ? array_sum(array_column($products ?? [], 'price'
             <h2>Add Product</h2>
             <p class="section-description">Quickly add new inventory items to your catalog.</p>
 
-            <?php if (!empty($message)): ?><div class="notice">✓ <?= htmlspecialchars($message) ?></div><?php endif; ?>
-            <?php if (!empty($error)): ?><div class="error">✕ <?= htmlspecialchars($error) ?></div><?php endif; ?>
+            <?php if (
+                !empty($message)
+            ): ?><div class="notice">✓ <?= htmlspecialchars(
+    $message,
+) ?></div><?php endif; ?>
+            <?php if (
+                !empty($error)
+            ): ?><div class="error">✕ <?= htmlspecialchars(
+    $error,
+) ?></div><?php endif; ?>
 
             <form method="post">
                 <label>
@@ -130,14 +164,29 @@ $avgPrice = $totalProducts > 0 ? array_sum(array_column($products ?? [], 'price'
                         </tr>
                     <?php else: ?>
                         <?php foreach ($products as $product): ?>
-                            <?php 
-                                $stock = (int)($product['stock'] ?? 0);
-                                $statusClass = $stock === 0 ? 'danger' : ($stock <= 5 ? 'warning' : 'success');
-                                $statusText = $stock === 0 ? 'Out of Stock' : ($stock <= 5 ? 'Low Stock' : 'In Stock');
+                            <?php
+                            $stock = (int) ($product["stock"] ?? 0);
+                            $statusClass =
+                                $stock === 0
+                                    ? "danger"
+                                    : ($stock <= 5
+                                        ? "warning"
+                                        : "success");
+                            $statusText =
+                                $stock === 0
+                                    ? "Out of Stock"
+                                    : ($stock <= 5
+                                        ? "Low Stock"
+                                        : "In Stock");
                             ?>
                             <tr>
-                                <td class="product-name"><?= htmlspecialchars($product['name'] ?? '') ?></td>
-                                <td>$<?= number_format((float)($product['price'] ?? 0), 2) ?></td>
+                                <td class="product-name"><?= htmlspecialchars(
+                                    $product["name"] ?? "",
+                                ) ?></td>
+                                <td>$<?= number_format(
+                                    (float) ($product["price"] ?? 0),
+                                    2,
+                                ) ?></td>
                                 <td><?= $stock ?></td>
                                 <td><span class="status <?= $statusClass ?>"><?= $statusText ?></span></td>
                             </tr>
