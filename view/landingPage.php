@@ -13,7 +13,7 @@
         <p class="landing-copy">Manage products, stock, and your store from one simple dashboard.</p>
         <div class="landing-actions">
             <a class="button-link" href="index.php?login=1">Log in</a>
-            <a class="button-link secondary" href="register.php">Register your shop</a>
+            <a class="button-link secondary" href="controller/register.php">Create an owner account</a>
         </div>
     </main>
 </body>
